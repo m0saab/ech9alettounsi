@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>اش قال التونسي</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root { --paper: #fdfdfd; --ink: #2d2d2d; --gray: #7d7d7d; --highlight: #fff352; --line: #e1e9ff; }
+        body { background: #f0f0f0; color: var(--ink); font-family: 'Cairo', sans-serif; margin: 0; display: flex; justify-content: center; min-height: 100vh; background-image: radial-gradient(var(--gray) 0.5px, transparent 0.5px); background-size: 20px 20px; }
+        .notebook { background: var(--paper); width: 95%; max-width: 500px; min-height: 90vh; margin: 20px 10px; padding: 40px 60px 40px 20px; box-shadow: 5px 5px 15px rgba(0,0,0,0.1); border: 1px solid #ddd; position: relative; background-image: linear-gradient(var(--line) 1px, transparent 1px); background-size: 100% 30px; line-height: 30px; overflow: hidden; display: flex; flex-direction: column; }
+        
+        .notebook::before { content: ''; position: absolute; top: 0; right: 50px; height: 100%; width: 2px; background: #ffcccc; }
+        #introOverlay, #failPopup { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); display: flex; justify-content: center; align-items: center; z-index: 1000; }
+        .popup { background: var(--paper); border: 3px solid var(--ink); padding: 25px; max-width: 85%; box-shadow: 10px 10px 0px var(--ink); transform: rotate(-1deg); }
+        .popup p { margin: 5px 0; border-bottom: 1px dashed #ccc; line-height: 1.6; }
+        .btn-close { background: var(--highlight); border: 2px solid var(--ink); padding: 5px 20px; margin-top: 15px; cursor: pointer; font-weight: bold; width: 100%; }
+        h1 { text-decoration: underline wavy var(--highlight); font-size: 1.4rem; margin-top: 0; }
+        .question-box { background: var(--highlight); padding: 5px 15px; display: inline-block; margin-bottom: 20px; box-shadow: 2px 2px 0px rgba(0,0,0,0.1); line-height: 1.4; }
+        .ticker { font-weight: bold; border: 2px solid var(--ink); display: inline-block; padding: 0 10px; margin-bottom: 10px; background: white; }
+        .answer-row { border-bottom: 1px solid #eee; padding: 10px 0; cursor: pointer; display: flex; justify-content: space-between; transition: 0.2s; user-select: none; -webkit-touch-callout: none; position: relative; z-index: 2; }
+        .answer-row.revealed .content { opacity: 1; }
+        .answer-row.marked { background: var(--highlight) !important; }
+        .content { opacity: 0; pointer-events: none; }
+        .strike-zone { margin-top: 40px; text-align: center; flex-grow: 1; }
+        .x-button { background: white; border: 2px solid var(--ink); width: 50px; height: 50px; font-size: 1.5rem; cursor: pointer; border-radius: 50%; }
+        .strikes { color: #d9534f; font-size: 2.5rem; font-weight: bold; height: 45px; }
+        
+        .ig-footer { text-align: center; margin-top: 30px; z-index: 5; }
+        .ig-button { display: inline-flex; align-items: center; gap: 8px; text-decoration: none; color: var(--ink); font-weight: bold; border: 2px solid var(--ink); padding: 8px 15px; background: white; transition: 0.2s; box-shadow: 4px 4px 0px var(--ink); }
+        .ig-button:active { transform: translate(2px, 2px); box-shadow: 2px 2px 0px var(--ink); }
+
+        #failPopup { display: none; }
+    </style>
+</head>
+<body>
+
+    <div id="introOverlay">
+        <div class="popup">
+            <p>• زوز فرق يتنافسو</p>
+            <p>• نسألو سؤال والفرق يخمّمو في إجابات الناس</p>
+            <p>• الفريق اللي يجيب أقوى إجابة يبدأ</p>
+            <p>• الفريق يحاول يكشف كل الإجابات قبل 3 غلطات</p>
+            <p>• إذا كمل الإجابات، يربح السؤال = هو ياخو النقطة</p>
+            <p>• إذا يعمل 3 غلطات، الفريق الآخر ينجم يسرق وياخو النقطة</p>
+            <button class="btn-close" onclick="document.getElementById('introOverlay').style.display='none'">ابدأ اللعب</button>
+        </div>
+    </div>
+
+    <div class="notebook">
+        <h1>اش قال التونسي 📝</h1>
+        <div class="ticker">الإجابات: <span id="counter">0</span> / 7</div>
+        <br>
+        <div class="question-box">السؤال: أغنية فيها كلمة "ناس"</div>
+
+        <div id="answers">
+            <div class="answer-row" onmousedown="startHold(this)" onmouseup="endHold(this)" ontouchstart="startHold(this)" ontouchend="endHold(this)" onclick="toggle(this)">
+                <span>1. <span class="content">كلام الناس</span></span>
+                <span class="content">29</span>
+            </div>
+            <div class="answer-row" onmousedown="startHold(this)" onmouseup="endHold(this)" ontouchstart="startHold(this)" ontouchend="endHold(this)" onclick="toggle(this)">
+                <span>2. <span class="content">يا ناس حبو الناس</span></span>
+                <span class="content">21</span>
+            </div>
+            <div class="answer-row" onmousedown="startHold(this)" onmouseup="endHold(this)" ontouchstart="startHold(this)" ontouchend="endHold(this)" onclick="toggle(this)">
+                <span>3. <span class="content">بحب الناس الرايقة</span></span>
+                <span class="content">19</span>
+            </div>
+            <div class="answer-row" onmousedown="startHold(this)" onmouseup="endHold(this)" ontouchstart="startHold(this)" ontouchend="endHold(this)" onclick="toggle(this)">
+                <span>4. <span class="content">غريبة الناس</span></span>
+                <span class="content">17</span>
+            </div>
+            <div class="answer-row" onmousedown="startHold(this)" onmouseup="endHold(this)" ontouchstart="startHold(this)" ontouchend="endHold(this)" onclick="toggle(this)">
+                <span>5. <span class="content">في ناس</span></span>
+                <span class="content">7</span>
+            </div>
+            <div class="answer-row" onmousedown="startHold(this)" onmouseup="endHold(this)" ontouchstart="startHold(this)" ontouchend="endHold(this)" onclick="toggle(this)">
+                <span>6. <span class="content">طبيب جراح</span></span>
+                <span class="content">4</span>
+            </div>
+            <div class="answer-row" onmousedown="startHold(this)" onmouseup="endHold(this)" ontouchstart="startHold(this)" ontouchend="endHold(this)" onclick="toggle(this)">
+                <span>7. <span class="content">الناس بالناس</span></span>
+                <span class="content">3</span>
+            </div>
+        </div>
+
+        <div class="strike-zone">
+            <div class="strikes" id="strikes"></div>
+            <button class="x-button" onclick="handleX()">X</button>
+            <p style="font-size: 0.8rem; color: var(--gray); margin-top:5px;">اضغط مطولاً للتلوين بالأصفر</p>
+        </div>
+
+        <div class="ig-footer">
+            <a href="https://www.instagram.com/squad.games.tn/" target="_blank" class="ig-button">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
+                @squad.games.tn
+            </a>
+        </div>
+    </div>
+
+    <div id="failPopup">
+        <div class="popup" style="text-align: center;">
+            <h2 style="color:#d9534f">3 غلطات!</h2>
+            <p>توة الدور للفريق لخر باش يسرق.</p>
+            <button class="btn-close" onclick="resetStrikes()">فهمت</button>
+        </div>
+    </div>
+
+    <script>
+        let strikeCount = 0, holdTimer;
+
+        function toggle(el) {
+            if (!el.classList.contains('was-held')) {
+                el.classList.toggle('revealed');
+                document.getElementById('counter').innerText = document.querySelectorAll('.answer-row.revealed').length;
+            }
+            el.classList.remove('was-held');
+        }
+
+        function startHold(el) {
+            holdTimer = setTimeout(() => {
+                el.classList.toggle('marked');
+                el.classList.add('was-held');
+            }, 600);
+        }
+
+        function endHold() { clearTimeout(holdTimer); }
+
+        function handleX() {
+            if (strikeCount < 3) {
+                strikeCount++;
+                document.getElementById('strikes').innerText += ' X ';
+                if (strikeCount === 3) document.getElementById('failPopup').style.display = 'flex';
+            }
+        }
+
+        function resetStrikes() {
+            strikeCount = 0;
+            document.getElementById('strikes').innerText = '';
+            document.getElementById('failPopup').style.display = 'none';
+        }
+    </script>
+</body>
+</html>
